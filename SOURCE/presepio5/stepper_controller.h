@@ -34,7 +34,29 @@ struct stepper_parameters{
     unsigned long expected_delay;
 };
 
+struct state_machine_parameters{
+
+    // reset pin
+    unsigned int input_pin;
+    unsigned int reset_pin;
+
+    unsigned int enable_pin;
+    unsigned int direction_pin;
+    unsigned int spin_direction;
+    unsigned int step_pin;
+    //
+    unsigned int step_number1;
+    unsigned int step_number2;
+    unsigned int step_number3;
+    unsigned int step_number4;
+    //
+    unsigned long expected_delay;
+};
+
 typedef struct stepper_parameters StepperParameters;
+typedef struct state_machine_parameters StateMachineParameters;
+
+/* ************************************************************* */
 
 class StepperController{
     public:
@@ -48,8 +70,6 @@ class StepperController{
                           unsigned long expected_delay);
         
         void next();
-        unsigned int get_servo_address();
-        //int get_servo_position();
         //
         unsigned int input_pin;
         unsigned int enable_pin;
@@ -63,27 +83,10 @@ class StepperController{
         void move_forward();
         void move_back();
         //
-        unsigned int current_position;
+        long current_position;
         bool state_step_pin;
         unsigned long current_delay;
 };
-
-/*
-StepperController::StepperController(unsigned int servo_address){
-    int pwm_bus = 1 << 12;
-    double period_ms = 1000.0 / PWM_FREQUENCY;
-    //
-    this->servo_address=servo_address;
-    this->input_pin = 0;
-    this->initial_position = 90;
-    this->final_position = 90;
-    //
-    this->current_delay=millis();
-    this->min_12bits_pwm = ceil(pwm_bus / (period_ms / 0.5));
-    this->max_12bits_pwm = floor(pwm_bus / (period_ms / 2.5));
-    this->expected_delay = (1<<32)-1;
-};
-*/
 
 StepperController::StepperController(unsigned int input_pin,
                                      unsigned int enable_pin,
@@ -112,7 +115,7 @@ StepperController::StepperController(StepperParameters parameters){
     this->direction_pin = parameters.direction_pin;
     this->step_pin = parameters.step_pin;
     //
-    
+
     this->spin_direction = parameters.spin_direction;
     this->step_number = parameters.step_number;
     this->expected_delay = parameters.expected_delay;
@@ -154,20 +157,17 @@ void StepperController::move_forward(){
 void StepperController::next(){
 
     boolean reading = false;
-    int sweep_direction = 0;
     reading = digitalRead(input_pin);
     
     if ((millis() - current_delay) >  expected_delay){
        
-          #ifndef SERVO_DEBUG
+          #ifndef STEPPER_DEBUG
               Serial.print("Reading:\t");
               Serial.print(reading);
               Serial.print("Step State:\t");
               Serial.print(state_step_pin);
               Serial.print("\tPosition:\t");
               Serial.print(current_position);
-              Serial.print("\tsweep_direction:\t");
-              Serial.print(sweep_direction);
               Serial.print("\tDelay:\t");
               Serial.println(millis() - current_delay);
         #endif
@@ -181,4 +181,185 @@ void StepperController::next(){
     } 
 };
 
+/* ************************************************************* */
+
+class StateMachineStepperController{
+    public:
+        StateMachineStepperController(StateMachineParameters parameters);
+        StateMachineStepperController(
+                          unsigned int input_pin,
+                          unsigned int reset_pin,
+                          unsigned int enable_pin,
+                          unsigned int direction_pin,
+                          unsigned int spin_direction1,
+                          unsigned int spin_direction2,
+                          unsigned int spin_direction3,
+                          unsigned int spin_direction4,
+                          unsigned int step_pin,
+                          unsigned int step_number,
+                          unsigned long expected_delay);
+
+        void next_sm();
+        //
+        unsigned int input_pin;
+        unsigned int reset_pin;
+
+        unsigned int enable_pin;
+        unsigned int direction_pin;
+        unsigned int spin_direction;
+        unsigned int step_pin;
+
+        // SM Param
+        unsigned int step_number1;
+        unsigned int step_number2;
+        unsigned int step_number3;
+        unsigned int step_number4;
+
+        unsigned long expected_delay;
+
+    private:
+        void move_sm(unsigned int total_steps, unsigned char next_state, boolean reading);
+        void move_forward();
+        void move_back();
+        //
+        long current_position;
+        bool state_step_pin;
+        unsigned long current_delay;
+        unsigned char state;
+};
+
+StateMachineStepperController::StateMachineStepperController(
+                                     unsigned int input_pin,
+                                     unsigned int reset_pin,
+                                     unsigned int enable_pin,
+                                     unsigned int direction_pin,
+                                     unsigned int spin_direction,
+                                     unsigned int step_pin,
+                                     unsigned int step_number1,
+                                     unsigned int step_number2,
+                                     unsigned int step_number3,
+                                     unsigned int step_number4,
+                                     unsigned long expected_delay){
+    
+    this->enable_pin = enable_pin;
+    this->reset_pin = reset_pin;
+    //
+    this->enable_pin = enable_pin;
+    this->direction_pin = direction_pin;
+    this->step_pin = step_pin;
+    //
+    this->spin_direction = spin_direction;
+    //
+    this->step_number1 = step_number1;
+    this->step_number1 = step_number2;
+    this->step_number1 = step_number3;
+    this->step_number1 = step_number4;
+
+    this->expected_delay = expected_delay;
+    //
+    this->current_delay=millis();
+    this->current_position = 0;
+    this->state = 'i';
+};
+
+StateMachineStepperController::StateMachineStepperController(StateMachineParameters parameters){
+
+    this->input_pin = parameters.input_pin;
+    this->reset_pin = parameters.reset_pin;
+    //
+    this->enable_pin = parameters.enable_pin;
+    this->direction_pin = parameters.direction_pin;
+    this->step_pin = parameters.step_pin;
+    //
+    this->step_number1 = parameters.step_number1;
+    this->step_number2 = parameters.step_number2;
+    this->step_number3 = parameters.step_number3;
+    this->step_number3 = parameters.step_number4;
+
+    this->spin_direction = parameters.spin_direction;
+    this->expected_delay = parameters.expected_delay;
+    //
+    this->current_delay=millis();
+    this->current_position = 0;
+    this->state = 'i';
+};
+
+void StateMachineStepperController::move_back(){
+
+    boolean end_stop = false;
+    if(abs(current_position) <= 0) end_stop = true;
+
+    if(!end_stop){
+        current_position--;
+        digitalWrite(direction_pin, bool(!spin_direction));
+        pulseOut(step_pin, 20);
+    }else{
+      state = 'i';
+      }
+};
+
+void StateMachineStepperController::move_sm(unsigned int total_steps, unsigned char next_state, boolean reading){
+    boolean end_stop = false;
+    if(abs(current_position) >= total_steps) end_stop = true;
+    if(!end_stop){
+        current_position++;
+        digitalWrite(direction_pin, bool(spin_direction));
+        pulseOut(step_pin, 20);
+    }else if(reading){
+        state = next_state;
+    }
+}
+
+void StateMachineStepperController::next_sm(){
+
+    boolean reading_move = false;
+    boolean reading_reset = false;
+
+    reading_move = digitalRead(input_pin);
+    reading_reset = digitalRead(reset_pin);
+
+    if ((millis() - current_delay) >  expected_delay){
+        #ifdef STEPPER_DEBUG
+              Serial.print("Reading Move:\t");
+              Serial.print(reading_move);
+              Serial.print("Reading Reset:\t");
+              Serial.print(reading_reset);
+              Serial.print("State:\t");
+              Serial.print(state);
+              Serial.print("\tPosition:\t");
+              Serial.print(current_position);
+              Serial.print("\tDelay:\t");
+              Serial.println(millis() - current_delay);
+        #endif
+        //
+        boolean end_stop = false;
+        unsigned long step_number_b = step_number1+step_number2;
+        unsigned long step_number_c = step_number_b+step_number3;
+        unsigned long step_number_d = step_number_c+step_number4;
+        //
+       switch(state){
+            case 'i':
+                if(reading_move) state = 'a';
+                break;
+            case 'a':
+                move_sm(step_number1, 'b', reading_move);
+                break;
+            case 'b':
+                move_sm(step_number_b, 'c', reading_move);
+                break;
+            case 'c':
+                move_sm(step_number_c, 'd', reading_move);
+                break;
+            case 'f':
+                move_sm(step_number_d, 'z', reading_move);
+                break;
+        }
+        //
+        if(reading_reset){
+            move_back();
+        }
+        //
+        current_delay = millis();
+    }
+};
 #endif

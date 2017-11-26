@@ -1,7 +1,7 @@
 #include <Wire.h>
-//#define DEBUG
+#define DEBUG
 
-#define ENABLE_SERVO
+//#define ENABLE_SERVO
 #ifdef ENABLE_SERVO
   #include <Servo.h>
   #include "servo_config_mega.h"
@@ -23,7 +23,7 @@
 
 void setup(){
     #ifdef DEBUG
-        Serial.begin(9600);
+        Serial.begin(115200);
         Serial.println("SERIAL DEBUG [ON]");
     #endif
 
@@ -61,19 +61,35 @@ void setup(){
         pinMode(param_stepper_array[i]->enable_pin, OUTPUT);
         pinMode(param_stepper_array[i]->direction_pin, OUTPUT);
         pinMode(param_stepper_array[i]->step_pin, OUTPUT);
-        
         //
         digitalWrite(param_stepper_array[i]->step_pin, LOW);
         digitalWrite(param_stepper_array[i]->direction_pin, HIGH);
-        digitalWrite(param_stepper_array[i]->enable_pin, HIGH);
-           
+        digitalWrite(param_stepper_array[i]->enable_pin, LOW);
+
         stepper_array[i] = new StepperController(
           *param_stepper_array[i]);
-        
+
         #ifdef DEBUG
-            Serial.print("Starting SERVO: ");
+            Serial.print("Starting STEPPER: ");
             Serial.println(i);
-        #endif      
+        #endif
+
+        // ESPECIAL - MAQUINA ESTADOS
+        pinMode(stepper_special_params.input_pin, INPUT);
+        pinMode(stepper_special_params.reset_pin, INPUT);
+        pinMode(stepper_special_params.enable_pin, OUTPUT);
+        pinMode(stepper_special_params.direction_pin, OUTPUT);
+        pinMode(stepper_special_params.step_pin, OUTPUT);
+        //
+        digitalWrite(stepper_special_params.step_pin, LOW);
+        digitalWrite(stepper_special_params.direction_pin, HIGH);
+        digitalWrite(stepper_special_params.enable_pin, LOW);
+
+        special_stepper = new StateMachineStepperController(stepper_special_params);
+
+        #ifdef DEBUG
+            Serial.print("Starting Special STEPPER : ");
+        #endif
     }
     #endif
 };
@@ -110,6 +126,8 @@ void loop(){
         #endif
         stepper_array[i]->next();
   }
+  // Stepper State Machine:
+  special_stepper->next_sm();
   #endif
 
 };

@@ -74,7 +74,7 @@ possivel garantir que estes intervalos serao obedecidos em tempo real.
 /* ------------------------------------------------------------*/
 
 StepperParameters stepper0 = {
-    6,       // input_pin (Fio da LightORama)
+    8,       // input_pin (Fio da LightORama)
     10,       // enable_pin (Fio Verde, sempre ligado)
     9,       // direction_pin (Fio Laranja, controlado pelo firmware)
     HORARIO, // spin_direction (HORARIO ou ANTIHORARIO)
@@ -84,12 +84,29 @@ StepperParameters stepper0 = {
 };
 
 StepperParameters stepper1 = {
-    7,       // input_pin (Fio da LightORama)
-    11,       // enable_pin (Fio Verde, sempre ligado)
-    12,       // direction_pin (Fio Laranja, controlado pelo firmware)
+    4,       // input_pin (Fio da LightORama)
+    14,       // enable_pin (Fio Verde, sempre ligado)
+    15,       // direction_pin (Fio Laranja, controlado pelo firmware)
     HORARIO, // spin_direction (HORARIO ou ANTIHORARIO)
-    13,       // step_pin (Fio Amarelo, controlado pelo firmware)
+    16,       // step_pin (Fio Amarelo, controlado pelo firmware)
     400,     // step_number (de 0 a 400)
+    20       // expected_delay
+};
+
+// ESPECIAL PARA as 4 fases
+StateMachineParameters stepper_special_params = {
+    7,       // input_pin (Sinal da LightORama para andar pra frente)
+    6,       // reset_pin (Reset - Sinal da LightORama para voltar para posição inicial)
+    23,       // enable_pin (Fio Verde, sempre ligado)
+    24,       // direction_pin (Fio Laranja, controlado pelo firmware)
+    HORARIO, // spin_direction (HORARIO ou ANTIHORARIO)
+    25,       // step_pin (Fio Amarelo, controlado pelo firmware)
+    //
+    400,     // step_number1
+    400,     // step_number2
+    400,     // step_number3
+    400,     // step_number4
+    //
     20       // expected_delay
 };
 
@@ -105,5 +122,6 @@ StepperParameters *param_stepper_array[] = {
 };
 
 StepperController *stepper_array[STEPPER_NUMBER];
+StateMachineStepperController *special_stepper;
 
 #endif
