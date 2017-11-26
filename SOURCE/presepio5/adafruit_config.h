@@ -1,7 +1,7 @@
 /*
 ===========================================
  Parametros para a controlar servos.
- Codigo para o driver PCA9685 da Adafruit 
+ Codigo para o driver PCA9685 da Adafruit
  Autor: Lucas Vido ( vidov8@gmail.com )
 ===========================================
 
@@ -22,7 +22,7 @@ Eles ficam no header PWM, sao os pinos da extremidade.
 * SDA pino vizinho do pino AREF
 
 ******* Parametros *******
-Os parametros so incializados atravez da estrutura ServoParameters
+Os parametros so incializados atravez da estrutura AdafruitParameters
 Esta estrutura aceita os seguintes parametros, NESTA ORDEM:
 
 * servo_address *
@@ -45,10 +45,10 @@ Para controlar um servo a largura do pulso minimo e de 0.5ms, e a largura entre
 dois pulsos deve ser de 20ms.
 Este software trabalha com uma frequencia de 50Hz, para atender um periodo
 de 20ms. Dado uma frequencia de 50Hz, o pulso minimo tem seu duty cycle de 2.5%.
-Portanto, teoricamente, o valor ideal min_12bits_pwm seria 103. Porem ele pode 
-variar de servo para servo. 
+Portanto, teoricamente, o valor ideal min_12bits_pwm seria 103. Porem ele pode
+variar de servo para servo.
 
-CUIDADO! : Valores muito baixos, podem danificar o Servo. 
+CUIDADO! : Valores muito baixos, podem danificar o Servo.
 
 * max_12bits_pwm *
 Largura do pulso que representa o fim de curso do servo. Este parametro
@@ -59,7 +59,7 @@ Para controlar um servo a largura do pulso maximo e de 2.5ms, e a largura entre
 dois pulsos deve ser de 20ms.
 Este software trabalha com uma frequencia de 50Hz para atender um periodo
 de 20ms. Dado uma frequencia de 50Hz, o pulso maximo tem seu duty cycle de 12.5%.
-Portanto, teoricamente, o valor ideal max_12bits_pwm seria 512. Porem ele pode 
+Portanto, teoricamente, o valor ideal max_12bits_pwm seria 512. Porem ele pode
 variar de servo para servo.
 
 CUIDADO! : Valores muito altos, podem danificar o Servo.
@@ -82,18 +82,15 @@ Devido a natureza concorrente do programa e o baixo clock do Arduino (16Mhz), na
 possivel garantir que estes intervalos serao obedecidos em tempo real.
 */
 
-#ifndef SERVO_CONFIG_H
-#define SERVO_CONFIG_H
+#ifndef ADAFRUIT_CONFIG_H
+#define ADAFRUIT_CONFIG_H
 
-#include "servo_controller.h"
-
-// Numero total de enderecos de servo
-#define SERVOS_NUMBER 16
+#include "adafruit_controller.h"
 
 // Nao mudar daqui para cima
 /* ------------------------------------------------------------*/
 
-ServoParameters servo0 = {
+AdafruitParameters servo0 = {
     0,         // servo_address (nao mudar !!!)
     22,      // input_pin
     110,   // min_12bits_pwm (Cuidado !!!)
@@ -103,7 +100,7 @@ ServoParameters servo0 = {
     30      // expected_delay
 };
 
-ServoParameters servo1 = {
+AdafruitParameters servo1 = {
     1,         // servo_address (nao mudar !!!)
     23,      // input_pin
     110,   // min_12bits_pwm  (Cuidado !!!)
@@ -113,7 +110,7 @@ ServoParameters servo1 = {
     30      // expected_delay
 };
 
-ServoParameters servo2 = {
+AdafruitParameters servo2 = {
     2,         // servo_address (nao mudar !!!)
     24,      // input_pin
     110,   // min_12bits_pwm  (Cuidado !!!)
@@ -123,7 +120,7 @@ ServoParameters servo2 = {
     30      // expected_delay
 };
 
-ServoParameters servo3 = {
+AdafruitParameters servo3 = {
     3,         // servo_address (nao mudar !!!)
     25,      // input_pin
     110,   // min_12bits_pwm   (Cuidado !!!)
@@ -133,7 +130,7 @@ ServoParameters servo3 = {
     30      // expected_delay
 };
 
-ServoParameters servo4 = {
+AdafruitParameters servo4 = {
     4,         // servo_address (nao mudar !!!)
     26,      // input_pin
     110,   // min_12bits_pwm  (Cuidado !!!)
@@ -143,7 +140,7 @@ ServoParameters servo4 = {
     30      // expected_delay
 };
 
-ServoParameters servo5 = {
+AdafruitParameters servo5 = {
     5,         // servo_address (nao mudar !!!)
     27,      // input_pin
     110,   // min_12bits_pwm  (Cuidado !!!)
@@ -153,7 +150,7 @@ ServoParameters servo5 = {
     20      // expected_delay
 };
 
-ServoParameters servo6 = {
+AdafruitParameters servo6 = {
     6,         // servo_address (nao mudar !!!)
     28,      // input_pin
     110,   // min_12bits_pwm  (Cuidado !!!)
@@ -163,7 +160,7 @@ ServoParameters servo6 = {
     30      // expected_delay
 };
 
-ServoParameters servo7 = {
+AdafruitParameters servo7 = {
     7,         // servo_address (nao mudar !!!)
     29,      // input_pin
     110,   // min_12bits_pwm  (Cuidado !!!)
@@ -173,7 +170,7 @@ ServoParameters servo7 = {
     30      // expected_delay
 };
 
-ServoParameters servo8 = {
+AdafruitParameters servo8 = {
     8,         // servo_address (nao mudar !!!)
     30,      // input_pin
     110,   // min_12bits_pwm  (Cuidado !!!)
@@ -183,7 +180,7 @@ ServoParameters servo8 = {
     10      // expected_delay
 };
 
-ServoParameters servo9 = {
+AdafruitParameters servo9 = {
     9,         // servo_address (nao mudar !!!)
     30,      // input_pin
     110,   // min_12bits_pwm  (Cuidado !!!)
@@ -193,7 +190,7 @@ ServoParameters servo9 = {
     10      // expected_delay
 };
 
-ServoParameters servo10 = {
+AdafruitParameters servo10 = {
     10,      // servo_address (nao mudar !!!)
     30,      // input_pin
     110,   // min_12bits_pwm  (Cuidado !!!)
@@ -203,7 +200,7 @@ ServoParameters servo10 = {
     10      // expected_delay
 };
 
-ServoParameters servo11 = {
+AdafruitParameters servo11 = {
     11,      // servo_address (nao mudar !!!)
     30,      // input_pin
     110,   // min_12bits_pwm  (Cuidado !!!)
@@ -213,7 +210,7 @@ ServoParameters servo11 = {
     10      // expected_delay
 };
 
-ServoParameters servo12 = {
+AdafruitParameters servo12 = {
     12,      // servo_address (nao mudar !!!)
     30,      // input_pin
     110,   // min_12bits_pwm  (Cuidado !!!)
@@ -223,7 +220,7 @@ ServoParameters servo12 = {
     10      // expected_delay
 };
 
-ServoParameters servo13 = {
+AdafruitParameters servo13 = {
     13,       // servo_address (nao mudar !!!)
     30,       // input_pin
     110,   // min_12bits_pwm  (Cuidado !!!)
@@ -233,7 +230,7 @@ ServoParameters servo13 = {
     10      // expected_delay
 };
 
-ServoParameters servo14 = {
+AdafruitParameters servo14 = {
     14,      // servo_address (nao mudar !!!)
     30,      // input_pin
     110,   // min_12bits_pwm  (Cuidado !!!)
@@ -243,7 +240,7 @@ ServoParameters servo14 = {
     10      // expected_delay
 };
 
-ServoParameters servo15 = {
+AdafruitParameters servo15 = {
     15,       // servo_address (nao mudar !!!)
     30,       // input_pin
     110,    // min_12bits_pwm  (Cuidado !!!)
@@ -256,7 +253,7 @@ ServoParameters servo15 = {
 // Nao mudar daqui para baixo
 /* ------------------------------------------------------------*/
 
-ServoParameters *parameters_array[] = {
+AdafruitParameters *param_adafruit_array[] = {
     &servo0,
     &servo1,
     &servo2,
@@ -275,6 +272,8 @@ ServoParameters *parameters_array[] = {
     &servo15,
 };
 
-ServoController *servo_array[SERVOS_NUMBER];
+// Numero total de enderecos de servo
+#define ADAFRUIT_CHANNELS_NUMBER 16
+AdafruitController *adafruit_array[ADAFRUIT_CHANNELS_NUMBER];
 
 #endif

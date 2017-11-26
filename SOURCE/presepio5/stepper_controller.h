@@ -14,10 +14,12 @@
 #include <Arduino.h>
 // #include <Wire.h> Must be imported outside.
 
-void pulseOut(int pin, int us)
+inline void pulseOut(int pin, int us)
 {
-   digitalWrite(pin, HIGH);
    us = max(us - 20, 1);
+   digitalWrite(pin, LOW);
+   delayMicroseconds(us);   
+   digitalWrite(pin, HIGH); 
    delayMicroseconds(us);
    digitalWrite(pin, LOW);
 }
@@ -133,7 +135,7 @@ void StepperController::move_back(){
     if(!end_stop){
         current_position--;
         digitalWrite(direction_pin, bool(!spin_direction));
-        pulseOut(step_pin, 25);
+        pulseOut(step_pin, 20);
     }
 };
 
@@ -145,7 +147,7 @@ void StepperController::move_forward(){
     if(!end_stop){        
         current_position++;
         digitalWrite(direction_pin, bool(spin_direction));
-        pulseOut(step_pin, 25);
+        pulseOut(step_pin, 20);
     }
 };
 

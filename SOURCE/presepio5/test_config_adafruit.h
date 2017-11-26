@@ -1,9 +1,6 @@
-#include "servo_controller.h"
+#include "adafruit_controller.h"
 
-// Numero total de enderecos de servo
-#define SERVOS_NUMBER 1
-
-ServoParameters servo0 = {
+AdafruitParameters servo0 = {
    2,        // servo_address (nao mudar !!!)
    24,        // input_pin
    103,   // min_12bits_pwm 
@@ -13,8 +10,9 @@ ServoParameters servo0 = {
    30         // expected_delay
 };
 
-ServoParameters *parameters_array[] = {
+AdafruitParameters *param_adafruit_array[] = {
   &servo0,
 };
 
-ServoController *servo_array[SERVOS_NUMBER];
+#define ADAFRUIT_CHANNELS_NUMBER 1
+AdafruitController *adafruit_array[SERVOS_NUMBER];
