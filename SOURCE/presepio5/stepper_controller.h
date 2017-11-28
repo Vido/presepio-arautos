@@ -9,6 +9,7 @@
 
 #define ANTIHORARIO 0
 #define HORARIO 1
+#define DESLIGADO -1
 
 #include <math.h>
 #include <Arduino.h>
@@ -26,6 +27,9 @@ inline void pulseOut(int pin, int us)
 
 struct stepper_parameters{
     unsigned int input_pin;
+    int initial_limit_pin;
+    int final_limit_pin;
+    //
     unsigned int enable_pin;
     unsigned int direction_pin;
     unsigned int spin_direction;
@@ -39,7 +43,9 @@ struct state_machine_parameters{
     // reset pin
     unsigned int input_pin;
     unsigned int reset_pin;
-
+    unsigned int initial_limit_pin;
+    unsigned int final_limit_pin;
+    //
     unsigned int enable_pin;
     unsigned int direction_pin;
     unsigned int spin_direction;
@@ -62,6 +68,8 @@ class StepperController{
     public:
         StepperController(StepperParameters parameters);
         StepperController(unsigned int input_pin,
+                          int initial_limit_pin,
+                          int final_limit_pin,
                           unsigned int enable_pin,
                           unsigned int direction_pin,
                           unsigned int spin_direction,
@@ -77,6 +85,12 @@ class StepperController{
         unsigned int spin_direction;
         unsigned int step_pin;
         unsigned int step_number;
+
+        // Limit Swtich
+        int initial_limit_pin;
+        int final_limit_pin;
+
+        //
         unsigned long expected_delay;
  
     private:
@@ -89,12 +103,18 @@ class StepperController{
 };
 
 StepperController::StepperController(unsigned int input_pin,
+                                     int initial_limit_pin,
+                                     int final_limit_pin,
                                      unsigned int enable_pin,
                                      unsigned int direction_pin,
                                      unsigned int spin_direction,
                                      unsigned int step_pin,
                                      unsigned int step_number,
                                      unsigned long expected_delay){
+    this->enable_pin = input_pin;
+    this->initial_limit_pin = initial_limit_pin;
+    this->final_limit_pin = final_limit_pin;
+    //
     this->enable_pin = enable_pin;
     this->direction_pin = direction_pin;
     this->step_pin = step_pin;
@@ -110,6 +130,8 @@ StepperController::StepperController(unsigned int input_pin,
 StepperController::StepperController(StepperParameters parameters){
 
     this->input_pin = parameters.input_pin;
+    this->initial_limit_pin = parameters.initial_limit_pin;
+    this->final_limit_pin = parameters.final_limit_pin;
     //
     this->enable_pin = parameters.enable_pin;
     this->direction_pin = parameters.direction_pin;
@@ -133,9 +155,11 @@ int StepperController::get_servo_position(){
 void StepperController::move_back(){
 
     boolean end_stop = false;
+    boolean initial_limit = true;
     if(abs(current_position) <= 0) end_stop = true;
+    if(initial_limit_pin > 0) initial_limit = digitalRead(initial_limit_pin);
     
-    if(!end_stop){
+    if(!end_stop || !initial_limit){
         current_position--;
         digitalWrite(direction_pin, bool(!spin_direction));
         pulseOut(step_pin, 20);
@@ -145,9 +169,11 @@ void StepperController::move_back(){
 void StepperController::move_forward(){
 
     boolean end_stop = false;
+    boolean final_limit = true;
     if(abs(current_position) >= step_number) end_stop = true;
+    if(final_limit_pin > 0) final_limit = digitalRead(final_limit_pin);
     
-    if(!end_stop){        
+    if(!end_stop || !final_limit){
         current_position++;
         digitalWrite(direction_pin, bool(spin_direction));
         pulseOut(step_pin, 20);
@@ -189,6 +215,8 @@ class StateMachineStepperController{
         StateMachineStepperController(
                           unsigned int input_pin,
                           unsigned int reset_pin,
+                          unsigned int initial_limit_pin,
+                          unsigned int final_limit_pin,
                           unsigned int enable_pin,
                           unsigned int direction_pin,
                           unsigned int spin_direction1,
@@ -215,6 +243,10 @@ class StateMachineStepperController{
         unsigned int step_number3;
         unsigned int step_number4;
 
+        // Limit Swtich
+        unsigned int initial_limit_pin;
+        unsigned int final_limit_pin;
+
         unsigned long expected_delay;
 
     private:
@@ -231,6 +263,8 @@ class StateMachineStepperController{
 StateMachineStepperController::StateMachineStepperController(
                                      unsigned int input_pin,
                                      unsigned int reset_pin,
+                                     unsigned int initial_limit_pin,
+                                     unsigned int final_limit_pin,
                                      unsigned int enable_pin,
                                      unsigned int direction_pin,
                                      unsigned int spin_direction,
@@ -243,6 +277,8 @@ StateMachineStepperController::StateMachineStepperController(
     
     this->enable_pin = enable_pin;
     this->reset_pin = reset_pin;
+    this->initial_limit_pin = initial_limit_pin;
+    this->final_limit_pin = final_limit_pin;
     //
     this->enable_pin = enable_pin;
     this->direction_pin = direction_pin;
@@ -266,6 +302,8 @@ StateMachineStepperController::StateMachineStepperController(StateMachineParamet
 
     this->input_pin = parameters.input_pin;
     this->reset_pin = parameters.reset_pin;
+    this->initial_limit_pin = parameters.initial_limit_pin;
+    this->final_limit_pin = parameters.final_limit_pin;
     //
     this->enable_pin = parameters.enable_pin;
     this->direction_pin = parameters.direction_pin;
@@ -288,20 +326,26 @@ void StateMachineStepperController::move_back(){
 
     boolean end_stop = false;
     if(abs(current_position) <= 0) end_stop = true;
+    boolean initial_limit = false;
+    initial_limit = digitalRead(initial_limit_pin);
 
-    if(!end_stop){
+    if(!end_stop || !initial_limit){
         current_position--;
         digitalWrite(direction_pin, bool(!spin_direction));
         pulseOut(step_pin, 20);
     }else{
+      current_position = 0;
       state = 'i';
-      }
+    }
 };
 
 void StateMachineStepperController::move_sm(unsigned int total_steps, unsigned char next_state, boolean reading){
     boolean end_stop = false;
     if(abs(current_position) >= total_steps) end_stop = true;
-    if(!end_stop){
+    boolean final_limit = false;
+    final_limit = digitalRead(final_limit_pin);
+
+    if(!end_stop || !final_limit){
         current_position++;
         digitalWrite(direction_pin, bool(spin_direction));
         pulseOut(step_pin, 20);
@@ -314,7 +358,6 @@ void StateMachineStepperController::next_sm(){
 
     boolean reading_move = false;
     boolean reading_reset = false;
-
     reading_move = digitalRead(input_pin);
     reading_reset = digitalRead(reset_pin);
 
@@ -337,7 +380,11 @@ void StateMachineStepperController::next_sm(){
         unsigned long step_number_c = step_number_b+step_number3;
         unsigned long step_number_d = step_number_c+step_number4;
         //
-       switch(state){
+        if(reading_reset){
+            state = 'y';
+        }
+
+        switch(state){
             case 'i':
                 if(reading_move) state = 'a';
                 break;
@@ -353,12 +400,10 @@ void StateMachineStepperController::next_sm(){
             case 'f':
                 move_sm(step_number_d, 'z', reading_move);
                 break;
+            case 'y':
+                move_back();
+                break;
         }
-        //
-        if(reading_reset){
-            move_back();
-        }
-        //
         current_delay = millis();
     }
 };

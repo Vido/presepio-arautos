@@ -58,6 +58,12 @@ void setup(){
     #ifdef ENABLE_STEPPER
     for(unsigned int i=0; i < STEPPER_NUMBER; i++){
         pinMode(param_stepper_array[i]->input_pin, INPUT);
+        //
+        if(param_stepper_array[i]->initial_limit_pin > 0)
+            pinMode(stepper_special_params.initial_limit_pin, INPUT);
+        if(param_stepper_array[i]->final_limit_pin > 0)
+            pinMode(stepper_special_params.final_limit_pin, INPUT);
+        //
         pinMode(param_stepper_array[i]->enable_pin, OUTPUT);
         pinMode(param_stepper_array[i]->direction_pin, OUTPUT);
         pinMode(param_stepper_array[i]->step_pin, OUTPUT);
@@ -77,6 +83,9 @@ void setup(){
         // ESPECIAL - MAQUINA ESTADOS
         pinMode(stepper_special_params.input_pin, INPUT);
         pinMode(stepper_special_params.reset_pin, INPUT);
+        pinMode(stepper_special_params.initial_limit_pin, INPUT);
+        pinMode(stepper_special_params.final_limit_pin, INPUT);
+        //
         pinMode(stepper_special_params.enable_pin, OUTPUT);
         pinMode(stepper_special_params.direction_pin, OUTPUT);
         pinMode(stepper_special_params.step_pin, OUTPUT);

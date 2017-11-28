@@ -74,32 +74,38 @@ possivel garantir que estes intervalos serao obedecidos em tempo real.
 /* ------------------------------------------------------------*/
 
 StepperParameters stepper0 = {
-    8,       // input_pin (Fio da LightORama)
+    8,        // input_pin (Fio da LightORama)
+    DESLIGADO,// initial_limit_pin (Sinal da chave-fim-de-curso NF, posição inicial) - Use numero do pino ou DESLIGADO
+    DESLIGADO,// final_limit_pin (Sinal da chave-fim-de-curso NF, posição final) - Use numero do pino ou DESLIGADO
     10,       // enable_pin (Fio Verde, sempre ligado)
-    9,       // direction_pin (Fio Laranja, controlado pelo firmware)
-    HORARIO, // spin_direction (HORARIO ou ANTIHORARIO)
-    8,       // step_pin (Fio Amarelo, controlado pelo firmware)
-    400,     // step_number (de 0 a 400)
-    20       // expected_delay
+    9,        // direction_pin (Fio Laranja, controlado pelo firmware)
+    HORARIO,  // spin_direction (HORARIO ou ANTIHORARIO)
+    8,        // step_pin (Fio Amarelo, controlado pelo firmware)
+    400,      // step_number (de 0 a 400)
+    20        // expected_delay
 };
 
 StepperParameters stepper1 = {
-    4,       // input_pin (Fio da LightORama)
+    4,        // input_pin (Fio da LightORama)
+    DESLIGADO,// initial_limit_pin (Sinal da chave-fim-de-curso NF, posição inicial) - Use numero do pino ou DESLIGADO
+    DESLIGADO,// final_limit_pin (Sinal da chave-fim-de-curso NF, posição final) - Use numero do pino ou DESLIGADO
     14,       // enable_pin (Fio Verde, sempre ligado)
     15,       // direction_pin (Fio Laranja, controlado pelo firmware)
-    HORARIO, // spin_direction (HORARIO ou ANTIHORARIO)
+    HORARIO,  // spin_direction (HORARIO ou ANTIHORARIO)
     16,       // step_pin (Fio Amarelo, controlado pelo firmware)
-    400,     // step_number (de 0 a 400)
-    20       // expected_delay
+    400,      // step_number (de 0 a 400)
+    20        // expected_delay
 };
 
 // ESPECIAL PARA as 4 fases
 StateMachineParameters stepper_special_params = {
-    7,       // input_pin (Sinal da LightORama para andar pra frente)
-    6,       // reset_pin (Reset - Sinal da LightORama para voltar para posição inicial)
+    7,        // input_pin (Sinal da LightORama para andar pra frente)
+    6,        // reset_pin (Reset - Sinal da LightORama para voltar para posição inicial)
+    33,       // initial_limit_pin (Sinal da chave-fim-de-curso NF, posição inicial)
+    34,       // final_limit_pin (Sinal da chave-fim-de-curso NF, posição final)
     23,       // enable_pin (Fio Verde, sempre ligado)
     24,       // direction_pin (Fio Laranja, controlado pelo firmware)
-    HORARIO, // spin_direction (HORARIO ou ANTIHORARIO)
+    HORARIO,  // spin_direction (HORARIO ou ANTIHORARIO)
     25,       // step_pin (Fio Amarelo, controlado pelo firmware)
     //
     400,     // step_number1
