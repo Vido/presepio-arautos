@@ -4,7 +4,8 @@
 #define PWM_FREQUENCY 50
 
 #ifdef DEBUG
-    #define STEPPER_DEBUG
+    //#define STEPPER_DEBUG
+    #define STEPPER2_DEBUG
 #endif
 
 #define ANTIHORARIO 0
@@ -43,8 +44,8 @@ struct state_machine_parameters{
     // reset pin
     unsigned int input_pin;
     unsigned int reset_pin;
-    unsigned int initial_limit_pin;
-    unsigned int final_limit_pin;
+    int initial_limit_pin;
+    int final_limit_pin;
     //
     unsigned int enable_pin;
     unsigned int direction_pin;
@@ -156,9 +157,9 @@ void StepperController::move_back(){
 
     boolean end_stop = false;
     boolean initial_limit = true;
-    if(abs(current_position) <= 0) end_stop = true;
+    if(current_position <= 0) end_stop = true;
     if(initial_limit_pin > 0) initial_limit = digitalRead(initial_limit_pin);
-    
+    if(!initial_limit) return;
     if(!end_stop || !initial_limit){
         current_position--;
         digitalWrite(direction_pin, bool(!spin_direction));
@@ -170,13 +171,15 @@ void StepperController::move_forward(){
 
     boolean end_stop = false;
     boolean final_limit = true;
-    if(abs(current_position) >= step_number) end_stop = true;
+    if(current_position >= step_number) end_stop = true;
     if(final_limit_pin > 0) final_limit = digitalRead(final_limit_pin);
-    
+    if(!final_limit) return;
     if(!end_stop || !final_limit){
         current_position++;
         digitalWrite(direction_pin, bool(spin_direction));
         pulseOut(step_pin, 20);
+    }else{
+      //current_position = step_number;
     }
 };
 
@@ -187,10 +190,10 @@ void StepperController::next(){
     
     if ((millis() - current_delay) >  expected_delay){
        
-          #ifndef STEPPER_DEBUG
+          #ifdef STEPPER_DEBUG
               Serial.print("Reading:\t");
               Serial.print(reading);
-              Serial.print("Step State:\t");
+              Serial.print("\tStep State:\t");
               Serial.print(state_step_pin);
               Serial.print("\tPosition:\t");
               Serial.print(current_position);
@@ -215,8 +218,8 @@ class StateMachineStepperController{
         StateMachineStepperController(
                           unsigned int input_pin,
                           unsigned int reset_pin,
-                          unsigned int initial_limit_pin,
-                          unsigned int final_limit_pin,
+                          int initial_limit_pin,
+                          int final_limit_pin,
                           unsigned int enable_pin,
                           unsigned int direction_pin,
                           unsigned int spin_direction1,
@@ -244,8 +247,8 @@ class StateMachineStepperController{
         unsigned int step_number4;
 
         // Limit Swtich
-        unsigned int initial_limit_pin;
-        unsigned int final_limit_pin;
+        int initial_limit_pin;
+        int final_limit_pin;
 
         unsigned long expected_delay;
 
@@ -263,8 +266,8 @@ class StateMachineStepperController{
 StateMachineStepperController::StateMachineStepperController(
                                      unsigned int input_pin,
                                      unsigned int reset_pin,
-                                     unsigned int initial_limit_pin,
-                                     unsigned int final_limit_pin,
+                                     int initial_limit_pin,
+                                     int final_limit_pin,
                                      unsigned int enable_pin,
                                      unsigned int direction_pin,
                                      unsigned int spin_direction,
@@ -325,27 +328,36 @@ StateMachineStepperController::StateMachineStepperController(StateMachineParamet
 void StateMachineStepperController::move_back(){
 
     boolean end_stop = false;
-    if(abs(current_position) <= 0) end_stop = true;
-    boolean initial_limit = false;
-    initial_limit = digitalRead(initial_limit_pin);
+    if(current_position <= 0) end_stop = true;
+    //
+    boolean initial_limit = true;
+    if(initial_limit_pin > 0) initial_limit = digitalRead(initial_limit_pin);
+    if(!initial_limit){
+      //current_position = 0;
+      state = 'i';
+      return;
+    }
 
-    if(!end_stop || !initial_limit){
+    if(!end_stop){
         current_position--;
         digitalWrite(direction_pin, bool(!spin_direction));
         pulseOut(step_pin, 20);
     }else{
-      current_position = 0;
+      //current_position = 0;
       state = 'i';
     }
 };
 
 void StateMachineStepperController::move_sm(unsigned int total_steps, unsigned char next_state, boolean reading){
+  
     boolean end_stop = false;
     if(abs(current_position) >= total_steps) end_stop = true;
-    boolean final_limit = false;
-    final_limit = digitalRead(final_limit_pin);
+    //
+    boolean final_limit = true;
+    if(final_limit_pin > 0) final_limit = digitalRead(final_limit_pin);
+    if(!final_limit) return;
 
-    if(!end_stop || !final_limit){
+    if(!end_stop){
         current_position++;
         digitalWrite(direction_pin, bool(spin_direction));
         pulseOut(step_pin, 20);
@@ -362,15 +374,23 @@ void StateMachineStepperController::next_sm(){
     reading_reset = digitalRead(reset_pin);
 
     if ((millis() - current_delay) >  expected_delay){
-        #ifdef STEPPER_DEBUG
+        #ifdef STEPPER2_DEBUG
               Serial.print("Reading Move:\t");
               Serial.print(reading_move);
-              Serial.print("Reading Reset:\t");
+              Serial.print("\tReading Reset:\t");
               Serial.print(reading_reset);
-              Serial.print("State:\t");
+              Serial.print("\tState:\t");
               Serial.print(state);
               Serial.print("\tPosition:\t");
               Serial.print(current_position);
+              if(initial_limit_pin > 0){
+                Serial.print("\tinitial_limit_pin:\t");
+                Serial.print(digitalRead(initial_limit_pin));
+              }
+              if(final_limit_pin > 0){
+                Serial.print("\tfinal_limit_pin:\t");
+                Serial.print(digitalRead(final_limit_pin));
+              }
               Serial.print("\tDelay:\t");
               Serial.println(millis() - current_delay);
         #endif

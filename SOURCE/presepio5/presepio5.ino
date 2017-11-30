@@ -1,5 +1,5 @@
 #include <Wire.h>
-#define DEBUG
+//#define DEBUG
 
 //#define ENABLE_SERVO
 #ifdef ENABLE_SERVO
@@ -83,8 +83,11 @@ void setup(){
         // ESPECIAL - MAQUINA ESTADOS
         pinMode(stepper_special_params.input_pin, INPUT);
         pinMode(stepper_special_params.reset_pin, INPUT);
-        pinMode(stepper_special_params.initial_limit_pin, INPUT);
-        pinMode(stepper_special_params.final_limit_pin, INPUT);
+        //
+        if(stepper_special_params.initial_limit_pin > 0)
+          pinMode(stepper_special_params.initial_limit_pin, INPUT);
+        if(stepper_special_params.final_limit_pin > 0)
+          pinMode(stepper_special_params.final_limit_pin, INPUT);
         //
         pinMode(stepper_special_params.enable_pin, OUTPUT);
         pinMode(stepper_special_params.direction_pin, OUTPUT);
@@ -130,8 +133,8 @@ void loop(){
   // Stepper
   for(int i=0; i < STEPPER_NUMBER; i++){
         #ifdef DEBUG
-            Serial.print("Stepper: ");
-            Serial.println(i);
+            // Serial.print("Stepper: ");
+            // Serial.println(i);
         #endif
         stepper_array[i]->next();
   }
