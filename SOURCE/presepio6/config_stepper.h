@@ -111,22 +111,38 @@ StepperParameters EstrelaBelem = {
     100,        // step_number (de 0 a 400)
     50          // expected_delay
 };
+*/
 
-
-StepperParameters SoldadosRomanosDir = {
-    9,         // IN -- input_pin (Fio da LightORama)
-    DESLIGADO, // FIM DE CURSO INI -- initial_limit_pin (Sinal da chave-fim-de-curso NF, posição inicial) - Use numero do pino ou DESLIGADO
-    DESLIGADO, // FIM DE CURSO FIM -- final_limit_pin (Sinal da chave-fim-de-curso NF, posição final) - Use numero do pino ou DESLIGADO
+StepperParameters SoldadosRomanosEsq = {
+    DESLIGADO, // IN -- input_pin (Fio da LightORama)
+    0,         // FIM DE CURSO INI -- initial_limit_pin (Sinal da chave-fim-de-curso NF, posição inicial) - Use numero do pino ou DESLIGADO
+    0,         // FIM DE CURSO FIM -- final_limit_pin (Sinal da chave-fim-de-curso NF, posição final) - Use numero do pino ou DESLIGADO
     2,         // enable_pin (Fio Verde, sempre ligado) Deixar número 2
     10,        // DIR -- direction_pin (Fio Laranja, controlado pelo firmware)
     HORARIO,   // spin_direction (HORARIO ou ANTIHORARIO)
     11,        // PUL -- step_pin (Fio Amarelo, controlado pelo firmware)
-    10000,     // step_number (de 0 a 400)
-    1          // expected_delay
+    DESLIGADO  // step_number (de 0 a 400)
+    DESLIGADO  // expected_delay
 };
-*/
 
+StepperParameters SoldadosRomanosDir = {
+    DESLIGADO, // IN -- input_pin (Fio da LightORama)
+    0,         // FIM DE CURSO INI -- initial_limit_pin (Sinal da chave-fim-de-curso NF, posição inicial) - Use numero do pino ou DESLIGADO
+    0,         // FIM DE CURSO FIM -- final_limit_pin (Sinal da chave-fim-de-curso NF, posição final) - Use numero do pino ou DESLIGADO
+    2,         // enable_pin (Fio Verde, sempre ligado) Deixar número 2
+    10,        // DIR -- direction_pin (Fio Laranja, controlado pelo firmware)
+    HORARIO,   // spin_direction (HORARIO ou ANTIHORARIO)
+    11,        // PUL -- step_pin (Fio Amarelo, controlado pelo firmware)
+    DESLIGADO, // step_number (de 0 a 400)
+    DESLIGADO  // expected_delay
+};
 
+RomanosParameters romanos = {
+    0, // IN -- input_pin (Fio da LightORama)
+    17,       // reset_pin (Reset - Sinal da LightORama para voltar para posição inicial)
+    400, // step_number;
+    1    // expected_delay;
+};
 
 // ESPECIAL PARA as 2 fases
 
@@ -159,14 +175,16 @@ StateMachineParameters stepper_special_params = {
 #define STEPPER_NUMBER 1
 
 StepperParameters *param_stepper_array[] = {
+    // Soldados romanos devem ser os 2 primeiros items da lista
+    &SoldadosRomanosDir,
+    &SoldadosRomanosEsq,
+    &ViaCrucis,
     //&AnjosGloria,
     //&EstrelaBelem,
-    //&SoldadosRomanosDir,
-    &ViaCrucis,
-    
 };
 
 StepperController *stepper_array[STEPPER_NUMBER];
 StateMachineStepperController *special_stepper;
+RomanosStateMachine *soldados_romanos;
 
 #endif

@@ -60,8 +60,16 @@ struct state_machine_parameters{
     unsigned long expected_delay;
 };
 
+struct romanos_parameters{
+    unsigned int input_pin;
+    unsigned int reset_pin;
+    unsigned int step_number;
+    unsigned long expected_delay;
+};
+
 typedef struct stepper_parameters StepperParameters;
 typedef struct state_machine_parameters StateMachineParameters;
+typedef struct romanos_parameters RomanosParameters;
 
 /* ************************************************************* */
 
@@ -79,6 +87,18 @@ class StepperController{
                           unsigned long expected_delay);
         
         void next();
+        int move_forward();
+        int move_back();
+        int move_back_fim_curso();
+        long set_position(long _position);
+
+        /*
+        Retornos:
+        0: Motor livra para o proximo passo
+        1: Fim de Curso
+        2: Limite lógico do motor
+        */
+        
         //
         unsigned int input_pin;
         unsigned int enable_pin;
@@ -90,14 +110,10 @@ class StepperController{
         // Limit Swtich
         int initial_limit_pin;
         int final_limit_pin;
-
         //
         unsigned long expected_delay;
  
     private:
-        void move_forward();
-        void move_back();
-        //
         long current_position;
         bool state_step_pin;
         unsigned long current_delay;
@@ -153,34 +169,65 @@ int StepperController::get_servo_position(){
 };
 */
 
-void StepperController::move_back(){
+long StepperController::set_position(long _position){
+    long p = this->current_position;
+    this->current_position = _position;
+    return p;
+}
+
+int StepperController::move_back(){
 
     boolean end_stop = false;
     boolean initial_limit = true;
     if(current_position <= 0) end_stop = true;
     if(initial_limit_pin > 0) initial_limit = digitalRead(initial_limit_pin);
-    if(!initial_limit) return;
-    if(!end_stop || !initial_limit){
-        current_position--;
-        digitalWrite(direction_pin, bool(!spin_direction));
-        pulseOut(step_pin, 20);
-    }
+
+    // Condicacao de Parada
+    if(!initial_limit) return 1;
+    if(end_stop) return 2;
+
+    // Gira o motor para tras 1 passo
+    current_position--;
+    digitalWrite(direction_pin, bool(!spin_direction));
+    pulseOut(step_pin, 20);
+    return 0;
 };
 
-void StepperController::move_forward(){
+int StepperController::move_back_fim_curso(){
+
+    boolean end_stop = false;
+    boolean initial_limit = true;
+    if(initial_limit_pin > 0) initial_limit = digitalRead(initial_limit_pin);
+
+    // Fim de curso
+    if(!initial_limit){
+      this->current_position = 0;
+      return 1;
+    }
+
+    // Gira o motor para tras 1 passo
+    digitalWrite(direction_pin, bool(!spin_direction));
+    pulseOut(step_pin, 20);
+    return 0;
+};
+
+
+int StepperController::move_forward(){
 
     boolean end_stop = false;
     boolean final_limit = true;
     if(current_position >= step_number) end_stop = true;
     if(final_limit_pin > 0) final_limit = digitalRead(final_limit_pin);
-    if(!final_limit) return;
-    if(!end_stop || !final_limit){
-        current_position++;
-        digitalWrite(direction_pin, bool(spin_direction));
-        pulseOut(step_pin, 20);
-    }else{
-      //current_position = step_number;
-    }
+    
+    // Condicacao de Parada
+    if(!final_limit) return 1;
+    if(end_stop) return 2;
+    
+    // Gira o motor para frente 1 passo
+    current_position++;
+    digitalWrite(direction_pin, bool(spin_direction));
+    pulseOut(step_pin, 20);
+    return 0;
 };
 
 void StepperController::next(){
@@ -265,12 +312,14 @@ class StateMachineStepperController{
         unsigned char state;
 };
 
+/*
 StateMachineStepperController::StateMachineStepperController(){
     //
     this->current_delay=millis();
     this->current_position = 0;
     this->state = 'i';
 };
+*/
 
 StateMachineStepperController::StateMachineStepperController(
                                      unsigned int input_pin,
@@ -455,51 +504,93 @@ void StateMachineStepperController::next_sm(){
 
 /* ************************************************************* */
 
-class RomanosStateMachine: public StateMachineStepperController {
+class RomanosStateMachine{
     public:
-        RomanosStateMachine(StepperParameters* left_parameters, StepperParameters* right_parameters);
+        RomanosStateMachine(
+          RomanosParameters* parameters,
+          StepperController* left_parameters,
+          StepperController* right_parameters);
         //
         void next_sm();
-    private:
-        StepperController *left_motor;
-        StepperController *right_motor;    
-            
-  
+        unsigned int input_pin;
+        unsigned int reset_pin;
+        unsigned int step_number;
+        unsigned long expected_delay;
+
+    protected:
+        //void move_sm(unsigned int total_steps, unsigned char next_state, boolean reading);
+        //void move_forward();
+        //void move_back();
+        //void move_back_fim_curso();
+        //
+        long current_position;
+        unsigned long current_delay;
+        unsigned char state;
+        StepperController* left_motor;
+        StepperController* right_motor;       
+
 };
 
-void StateMachineStepperController::next_sm(){
+RomanosStateMachine::RomanosStateMachine(RomanosParameters* parameters,
+                                         StepperController* left_controller,
+                                         StepperController* right_controller){
 
+    this->input_pin = parameters->input_pin;
+    this->reset_pin = parameters->reset_pin;
+    this->step_number = parameters->step_number;
+    this->expected_delay = parameters->expected_delay;
+    //
+    left_motor = left_controller;
+    right_motor = right_controller;
+    //
+    this->current_delay=millis();
+    this->current_position = 0;
+    this->state = 'I';
+};
+
+void RomanosStateMachine::next_sm(){
+
+    int left_signal = 0;
+    int right_signal = 0;
     boolean reading_move = false;
     boolean reading_reset = false;
-    reading_move = digitalRead(input_pin);
+    reading_move = digitalRead(left_motor->input_pin) || digitalRead(right_motor->input_pin);
     reading_reset = digitalRead(reset_pin);
 
     if ((millis() - current_delay) >  expected_delay){
         //
         boolean end_stop = false;
-        //
-        if(reading_reset){
-            state = 'y';
-        }
-
+        if(reading_reset) state = 'Y';
+        
         switch(state){
-            case 'i':
-                if(reading_move) state = 'a';
+            case 'I':
+                if(reading_move) state = 'L';
                 break;
-            case 'a':
-                move_sm(step_number, 'b', reading_move);
+            case 'L':
+                if(reading_move){
+                    left_signal = left_motor->move_forward();
+                }
+                if(left_signal==1) state = 'Z';
+                if(left_signal==2){
+                    state = 'R';
+                    left_motor->set_position(0);
+                }
                 break;
-            case 'b':
-                move_sm(step_number, 'c', reading_move);
+            case 'R':
+                if(reading_move){
+                    right_signal = right_motor->move_forward();
+                }
+                if(right_signal==1) state = 'Z';
+                if(right_signal==2){
+                    state = 'L';
+                    right_motor->set_position(0);
+                }
                 break;
-            case 'c':
-                move_sm(step_number, 'd', reading_move);
-                break;
-            case 'd':
-                move_sm(step_number, 'z', reading_move);
-                break;
-            case 'y':
-                move_back();
+            case 'Y':
+                left_signal = left_motor->move_back_fim_curso();
+                right_signal = right_motor->move_back_fim_curso();
+                // Fim de curso, volta ao estado inicial
+                if(right_signal==1 && right_signal==1) state = 'I';
                 break;
         }
         current_delay = millis();

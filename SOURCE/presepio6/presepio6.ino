@@ -98,6 +98,9 @@ void setup(){
         digitalWrite(stepper_special_params.enable_pin, LOW);
 
         special_stepper = new StateMachineStepperController(stepper_special_params);
+        soldados_romanos = new RomanosStateMachine(&romanos,
+                                                   stepper_array[0],
+                                                   stepper_array[1]);
 
         #ifdef DEBUG
             Serial.print("Starting Special STEPPER : ");
